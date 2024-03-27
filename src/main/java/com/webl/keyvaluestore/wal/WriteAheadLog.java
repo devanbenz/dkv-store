@@ -4,6 +4,9 @@ import com.webl.keyvaluestore.models.KeyValue;
 import org.tinylog.Logger;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,8 +14,10 @@ public class WriteAheadLog {
     private final FileOutputStream fileOutputStream;
     private final DataOutputStream dataOutputStream;
     private final DataInputStream dataInputStream;
+    private final String filePath;
 
     public WriteAheadLog(String filePath) throws IOException {
+        this.filePath = filePath;
         try {
             this.fileOutputStream = new FileOutputStream(filePath);
             this.dataOutputStream = new DataOutputStream(this.fileOutputStream);
@@ -67,7 +72,17 @@ public class WriteAheadLog {
     }
 
     public void clearLog() {
-
+        Path path = Paths.get(this.filePath);
+        try {
+            boolean success = Files.deleteIfExists(path);
+            if (success) {
+                Logger.info("wal cleared");
+            } else {
+                Logger.info("file does not exist or could not be deleted");
+            }
+        } catch (IOException e) {
+            Logger.error(e.getMessage());
+        }
     }
 
     private KeyValue getKeyAndValue() throws IOException {

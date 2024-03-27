@@ -9,9 +9,9 @@ import java.io.IOException;
 
 public class KeyValueStoreMain {
     public static void main(String[] args) throws IOException {
-        WriteAheadLog wal = new WriteAheadLog("test.dat");
+        WriteAheadLog wal = new WriteAheadLog("wal.dat");
         MemTable memTable = new MemTable();
-        SSTable ssTable = new SSTable();
+        SSTable ssTable = new SSTable("sstable.dat");
 
         memTable.insertKeyValue("a", "b");
         wal.writeLog("a", "b");
@@ -26,6 +26,7 @@ public class KeyValueStoreMain {
         memTable2.registerSSTableObserver(ssTable);
         memTable2.flushToDisk();
 
+        wal.clearLog();
         wal.closeWriter();
     }
 }

@@ -3,21 +3,22 @@ package com.webl.keyvaluestore.memtable;
 import com.webl.keyvaluestore.models.KeyValue;
 import com.webl.keyvaluestore.observers.FlushObserver;
 
+import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
+import java.util.TreeMap;
 
 public class MemTable {
-    private final HashMap<String, String> hashMap;
+    private final TreeMap<String, String> hashMap;
     private final List<FlushObserver> observers = new ArrayList<>();
 
     public MemTable() {
-        this.hashMap = new HashMap<>();
+        this.hashMap = new TreeMap<>();
     }
 
     public MemTable(List<KeyValue> maybeKeyValues) {
         super();
-        this.hashMap = new HashMap<>();
+        this.hashMap = new TreeMap<>();
         if (maybeKeyValues != null) {
             maybeKeyValues.forEach(kv -> this.hashMap.put(kv.key(), kv.value()));
         }
@@ -40,6 +41,12 @@ public class MemTable {
     }
 
     public void flushToDisk() {
-        this.observers.forEach(obs -> obs.onFlush(this));
+        this.observers.forEach(obs -> {
+            try {
+                obs.onFlush(this.hashMap);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 }

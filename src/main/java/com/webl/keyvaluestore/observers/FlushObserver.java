@@ -1,7 +1,8 @@
 package com.webl.keyvaluestore.observers;
 
-import com.webl.keyvaluestore.memtable.MemTable;
+import java.io.IOException;
+import java.util.TreeMap;
 
 public interface FlushObserver {
-    void onFlush(MemTable memTable);
+    void onFlush(TreeMap<String, String> treeMap) throws IOException;
 }
