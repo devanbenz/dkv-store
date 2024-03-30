@@ -2,6 +2,8 @@ package com.webl.keyvaluestore.memtable;
 
 import com.webl.keyvaluestore.models.KeyValue;
 import com.webl.keyvaluestore.observers.FlushObserver;
+import com.webl.keyvaluestore.observers.WalObserver;
+import org.tinylog.Logger;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -9,8 +11,9 @@ import java.util.List;
 import java.util.TreeMap;
 
 public class MemTable {
-    private final TreeMap<String, String> hashMap;
-    private final List<FlushObserver> observers = new ArrayList<>();
+    private TreeMap<String, String> hashMap;
+    private final List<FlushObserver> flushObservers = new ArrayList<>();
+    private WalObserver logObserver = null;
 
     public MemTable() {
         this.hashMap = new TreeMap<>();
@@ -28,25 +31,32 @@ public class MemTable {
         return this.hashMap.get(key);
     }
 
-    public void insertKeyValue(String key, String value) {
+    public void insertKeyValue(String key, String value) throws IOException {
         this.hashMap.put(key, value);
-    }
 
-    public void setValue(String key, String value) {
-        this.hashMap.put(key, value);
+        if (this.logObserver != null) {
+            this.logObserver.writeLog(key, value);
+        }
     }
 
     public void registerSSTableObserver(FlushObserver flushObserver) {
-        observers.add(flushObserver);
+        flushObservers.add(flushObserver);
+    }
+
+    public void registerWalObserver(WalObserver walObserver) {
+        this.logObserver = walObserver;
     }
 
     public void flushToDisk() {
-        this.observers.forEach(obs -> {
+        this.flushObservers.forEach(obs -> {
             try {
                 obs.onFlush(this.hashMap);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         });
+
+        Logger.info("flushing in memory tree - data is in sstable");
+        this.hashMap = new TreeMap<>();
     }
 }

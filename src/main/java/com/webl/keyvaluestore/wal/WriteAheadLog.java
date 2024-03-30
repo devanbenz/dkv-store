@@ -1,6 +1,7 @@
 package com.webl.keyvaluestore.wal;
 
 import com.webl.keyvaluestore.models.KeyValue;
+import com.webl.keyvaluestore.observers.WalObserver;
 import org.tinylog.Logger;
 
 import java.io.*;
@@ -10,7 +11,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
-public class WriteAheadLog {
+public class WriteAheadLog implements WalObserver {
     private final FileOutputStream fileOutputStream;
     private final DataOutputStream dataOutputStream;
     private final DataInputStream dataInputStream;

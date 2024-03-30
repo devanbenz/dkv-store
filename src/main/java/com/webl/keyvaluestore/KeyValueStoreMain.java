@@ -1,32 +1,48 @@
 package com.webl.keyvaluestore;
 
 import com.webl.keyvaluestore.memtable.MemTable;
+import com.webl.keyvaluestore.server.KvServer;
 import com.webl.keyvaluestore.sstable.SSTable;
 import com.webl.keyvaluestore.wal.WriteAheadLog;
 import org.tinylog.Logger;
+import picocli.CommandLine;
 
 import java.io.IOException;
+import java.nio.file.Paths;
+import java.util.concurrent.Callable;
 
-public class KeyValueStoreMain {
-    public static void main(String[] args) throws IOException {
+@CommandLine.Command(name = "dkv", description = "DKV key value store")
+public class KeyValueStoreMain implements Callable<Integer> {
+    @CommandLine.Option(names = {"-d", "--store-dir"}, description = "Directory for storage directory")
+    private String storageDir = String.format("%s/store", Paths.get("").toAbsolutePath());
+
+    @CommandLine.Option(names = {"-l", "--log-dir"}, description = "Directory for storage directory")
+    private String logDir = String.format("%s/log", Paths.get("").toAbsolutePath());
+
+    @CommandLine.Option(names = {"-p", "--port"}, description = "Port for server to listen on")
+    private int port = 6379;
+
+    @Override
+    public Integer call() throws Exception {
+        SSTable ssTable = new SSTable("sstable.dat");
         WriteAheadLog wal = new WriteAheadLog("wal.dat");
         MemTable memTable = new MemTable();
-        SSTable ssTable = new SSTable("sstable.dat");
 
-        memTable.insertKeyValue("a", "b");
-        wal.writeLog("a", "b");
-        memTable.insertKeyValue("1", "2");
-        wal.writeLog("1", "2");
+        try {
+            memTable.registerSSTableObserver(ssTable);
+            memTable.registerWalObserver(wal);
 
-        MemTable memTable2 = new MemTable(wal.readLog());
-        String valueFromLoadedWal = memTable2.getValue("a");
+            new KvServer(this.port, memTable);
+        } catch (IOException e) {
+            Logger.error(e.getMessage());
+            throw new IOException(e);
+        }
 
-        Logger.info(String.format("from loaded file %s", valueFromLoadedWal));
+        return 0;
+    }
 
-        memTable2.registerSSTableObserver(ssTable);
-        memTable2.flushToDisk();
-
-        wal.clearLog();
-        wal.closeWriter();
+    public static void main(String ...args) {
+        int exitCode = new CommandLine(new KeyValueStoreMain()).execute(args);
+        System.exit(exitCode);
     }
 }

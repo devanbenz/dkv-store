@@ -12,7 +12,7 @@ public class SSTable implements FlushObserver {
 
     public SSTable(String filePath) throws IOException {
         try {
-            FileOutputStream fileOutputStream = new FileOutputStream(filePath);
+            FileOutputStream fileOutputStream = new FileOutputStream(filePath, true);
             this.dataOutputStream = new ObjectOutputStream(fileOutputStream);
 
         } catch (IOException e) {
