@@ -58,5 +58,10 @@ public class MemTable {
 
         Logger.info("flushing in memory tree - data is in sstable");
         this.hashMap = new TreeMap<>();
+
+        if (this.logObserver != null) {
+            Logger.info("clearing WAL");
+            this.logObserver.clearLog();
+        }
     }
 }

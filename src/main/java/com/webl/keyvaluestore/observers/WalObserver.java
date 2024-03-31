@@ -8,4 +8,5 @@ import java.util.List;
 public interface WalObserver {
     void writeLog(String key, String value) throws IOException;
     List<KeyValue> readLog() throws IOException;
+    void clearLog();
 }
