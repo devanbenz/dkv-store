@@ -44,3 +44,4 @@ bin/
 
 # local wal
 *.dat
+*.sstable

@@ -1,5 +1,6 @@
 package com.webl.keyvaluestore;
 
+import com.webl.keyvaluestore.indexes.Indexes;
 import com.webl.keyvaluestore.memtable.MemTable;
 import com.webl.keyvaluestore.server.KvServer;
 import com.webl.keyvaluestore.sstable.SSTable;
@@ -24,15 +25,16 @@ public class KeyValueStoreMain implements Callable<Integer> {
 
     @Override
     public Integer call() throws Exception {
-        SSTable ssTable = new SSTable("sstable.dat");
+        SSTable ssTable = new SSTable("sst");
         WriteAheadLog wal = new WriteAheadLog("wal.dat");
         MemTable memTable = new MemTable();
+        Indexes indexes = new Indexes();
 
         try {
             memTable.registerSSTableObserver(ssTable);
             memTable.registerWalObserver(wal);
 
-            new KvServer(this.port, memTable);
+            new KvServer(this.port, memTable, indexes, ssTable);
         } catch (IOException e) {
             Logger.error(e.getMessage());
             throw new IOException(e);

@@ -1,5 +1,7 @@
 package com.webl.keyvaluestore.memtable;
 
+import com.webl.keyvaluestore.indexes.Indexes;
+import com.webl.keyvaluestore.models.IndexEntry;
 import com.webl.keyvaluestore.models.KeyValue;
 import com.webl.keyvaluestore.observers.FlushObserver;
 import com.webl.keyvaluestore.observers.WalObserver;
@@ -8,6 +10,7 @@ import org.tinylog.Logger;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.TreeMap;
 
 public class MemTable {
@@ -31,6 +34,10 @@ public class MemTable {
         return this.hashMap.get(key);
     }
 
+    public int getSize() {
+        return this.hashMap.size();
+    }
+
     public void insertKeyValue(String key, String value) throws IOException {
         this.hashMap.put(key, value);
 
@@ -47,10 +54,10 @@ public class MemTable {
         this.logObserver = walObserver;
     }
 
-    public void flushToDisk() {
+    public void flushToDisk(Indexes indexes) {
         this.flushObservers.forEach(obs -> {
             try {
-                obs.onFlush(this.hashMap);
+                obs.onFlush(this.hashMap, indexes);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
